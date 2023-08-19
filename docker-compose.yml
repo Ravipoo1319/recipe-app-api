@@ -1,0 +1,15 @@
+version: "3.9" # the version of the docker-compose synatx that we are going to use
+
+# The docker-compose.yml conatin one or more services that are needed for our application.
+services:
+  app: # Name of a service
+    build: # We gonna build docker file inside our current directory
+      context: . # current directory
+      args:
+        - DEV=true
+    ports: # through this port we can access this service on our local machine
+      - "8000:8000"
+    volumes: # It is the way of mapping our directory to our docker container
+      - ./app:/app
+    command: > # command that is used to run the server.
+      sh -c "python manage.py runserver 0.0.0.0:8000"
