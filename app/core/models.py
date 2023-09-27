@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     # and fields
 )
 
+
 class UserManager(BaseUserManager):
     """manager for users."""
 
