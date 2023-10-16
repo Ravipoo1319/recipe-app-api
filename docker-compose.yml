@@ -2,8 +2,8 @@ version: "3.9" # the version of the docker-compose synatx that we are going to u
 
 # The docker-compose.yml conatin one or more services that are needed for our application.
 services:
-  app: # Name of a service
-    build: # We gonna build docker file inside our current directory
+  app: # Name of a first service
+    build: # service should be build from the dockerfile located in the current directory.
       context: . # current directory
       args:
         - DEV=true
@@ -15,7 +15,7 @@ services:
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
-    environment:
+    environment: # sets the env variables that the application inside the container can use.
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
@@ -23,14 +23,14 @@ services:
     depends_on:
       - db
 
-  db:
-    image: postgres:13-alpine
+  db: # this is the name of the second service
+    image: postgres:13-alpine # it specifies the service should use the postgres:13-alpine docker image
     volumes:
-      - dev-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=devdb
+      - dev-db-data:/var/lib/postgresql/data # creates a named volume dev-db-data and mounts it to the directory on the container. This volume is used to persist the postgreSQL data.
+    environment: # sets env variables for the postgreSQL container
+      - POSTGRES_DB=devdb # database name
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=changeme
 
-volumes:
+volumes: # defination of named volume
   dev-db-data:
