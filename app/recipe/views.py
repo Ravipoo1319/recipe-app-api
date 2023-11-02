@@ -1,14 +1,16 @@
 from .serializers import (
     RecipeSerializer,
     RecipeDetailSerializer,
-    TagSerializer
+    TagSerializer,
+    IngradientSerializer
 )
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from core.models import (
     Recipe,
-    Tag
+    Tag,
+    Ingradient,
 )
 
 
@@ -46,4 +48,16 @@ class TagViewSet(mixins.UpdateModelMixin,
 
     def get_queryset(self):
         """Filter queryset to authenticated user."""
+        return self.queryset.filter(user=self.request.user).order_by("-name")
+
+
+class IngradientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """Manage ingradients in the database."""
+    queryset = Ingradient.objects.all()
+    serializer_class = IngradientSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieves ingradient for authenticated user."""
         return self.queryset.filter(user=self.request.user).order_by("-name")

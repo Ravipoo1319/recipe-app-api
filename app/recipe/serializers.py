@@ -1,8 +1,18 @@
 from rest_framework import serializers
 from core.models import (
     Recipe,
-    Tag
+    Tag,
+    Ingradient
 )
+
+
+class IngradientSerializer(serializers.ModelSerializer):
+    """Serializer for ingradient objects."""
+
+    class Meta:
+        model = Ingradient
+        fields = ["id", "name"]
+        read_only_fields = ["id"]
 
 
 class TagSerializer(serializers.ModelSerializer):

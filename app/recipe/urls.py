@@ -6,6 +6,7 @@ from . import views
 router = DefaultRouter()
 router.register("recipes", views.RecipeViewSet)
 router.register("tag", views.TagViewSet)
+router.register("ingradient", views.IngradientViewSet)
 
 app_name = "recipe"
 

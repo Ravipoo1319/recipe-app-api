@@ -4,7 +4,11 @@ Test for Models.
 from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from core.models import Recipe, Tag
+from core.models import (
+    Recipe,
+    Tag,
+    Ingradient
+)
 
 
 def create_user(email="test@example.com", password="testpass123"):
@@ -78,3 +82,13 @@ class ModelTest(TestCase):
         tag = Tag.objects.create(user=user, name="Tag1")
 
         self.assertEqual(str(tag), tag.name)
+
+    def test_create_ingradeint(self):
+        """Test creating a new ingradients."""
+        user = create_user()
+        ingradient = Ingradient.objects.create(
+            user=user,
+            name="ingradient1",
+        )
+
+        self.assertEqual(str(ingradient), ingradient.name)
