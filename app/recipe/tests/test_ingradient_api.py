@@ -83,3 +83,17 @@ class PrivateIngredientApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         ingradient.refresh_from_db()
         self.assertEqual(ingradient.name, payload["name"])
+
+    def test_delete_ingradient(self):
+        """Test deleting the ingradinet is successful."""
+        ingradient = Ingradient.objects.create(
+            user=self.user,
+            name="Lettuce",
+        )
+
+        url = detail_url(ingradient.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        ingradient_exists = Ingradient.objects.filter(user=self.user).exists()
+        self.assertFalse(ingradient_exists)

@@ -51,7 +51,8 @@ class TagViewSet(mixins.UpdateModelMixin,
         return self.queryset.filter(user=self.request.user).order_by("-name")
 
 
-class IngradientViewSet(mixins.UpdateModelMixin,
+class IngradientViewSet(mixins.DestroyModelMixin,
+                        mixins.UpdateModelMixin,
                         mixins.ListModelMixin,
                         viewsets.GenericViewSet):
     """Manage ingradients in the database."""
