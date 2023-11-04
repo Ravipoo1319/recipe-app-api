@@ -10,6 +10,11 @@ from recipe.serializers import IngradientSerializer
 INGREADIENT_URLS = reverse("recipe:ingradient-list")
 
 
+def detail_url(ingradient_id):
+    """Create and return an ingradient detail url."""
+    return reverse("recipe:ingradient-detail", args=[ingradient_id])
+
+
 def create_user(email="user@example.com", password="userpass123"):
     """Create and return a user."""
     return get_user_model().objects.create_user(
@@ -63,3 +68,18 @@ class PrivateIngredientApiTests(TestCase):
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]["name"], ing.name)
         self.assertEqual(res.data[0]["id"], ing.id)
+
+    def test_update_ingradient(self):
+        """Test updating an existing ingradient."""
+        ingradient = Ingradient.objects.create(
+            user=self.user,
+            name="ingradient test",
+        )
+
+        payload = {"name": "Updated ingradient"}
+        url = detail_url(ingradient.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        ingradient.refresh_from_db()
+        self.assertEqual(ingradient.name, payload["name"])
