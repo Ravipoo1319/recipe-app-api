@@ -336,3 +336,44 @@ class PrivateRecipeAPITests(TestCase):
                 user=self.user,
             ).exists()
             self.assertTrue(exists)
+
+    def test_create_ingradient_on_update(self):
+        """Test creating an ingradient on updating recipe."""
+        recipe = create_recipe(user=self.user)
+
+        payload = {
+            "ingradients": [{"name": "Limes"}]
+        }
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_ingradient = Ingradient.objects.get(user=self.user, name="Limes")
+        self.assertIn(new_ingradient, recipe.ingradients.all())
+
+    def test_update_recipe_assign_ingradient(self):
+        """Test assigning an existing ingradient when updating a recipe."""
+        ingradient1 = Ingradient.objects.create(user=self.user, name="Pepper")
+        recipe = create_recipe(user=self.user)
+        recipe.ingradients.add(ingradient1)
+
+        ingradient2 = Ingradient.objects.create(user=self.user, name="Chilli")
+        payload = {"ingradients": [{"name": "Chilli"}]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format="json")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(ingradient2, recipe.ingradients.all())
+        self.assertNotIn(ingradient1, recipe.ingradients.all())
+
+    def test_clear_recipe_ingradient(self):
+        """Test clearing a recipe's ingradients."""
+        ingradient = Ingradient.objects.create(user=self.user, name="Garlic")
+        recipe = create_recipe(user=self.user)
+        recipe.ingradients.add(ingradient)
+
+        payload = {"ingradients": []}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format="json")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.ingradients.count(), 0)

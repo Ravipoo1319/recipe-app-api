@@ -75,6 +75,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Update and return a recipe."""
         tags = validated_data.pop("tags", None)
+        ings = validated_data.pop("ingradients", None)
+
+        if ings is not None:
+            instance.ingradients.clear()
+            self._get_or_create_ingradients(ings, instance)
+
         if tags is not None:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
