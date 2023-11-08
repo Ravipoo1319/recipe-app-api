@@ -1,3 +1,9 @@
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes,
+)
 from .serializers import (
     RecipeSerializer,
     RecipeDetailSerializer,
@@ -17,6 +23,22 @@ from core.models import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'tags',
+                OpenApiTypes.STR,
+                description="comma separated list of IDs to filter."
+            ),
+            OpenApiParameter(
+                "ingradients",
+                OpenApiTypes.STR,
+                description="comma separated list of IDs to filter."
+            )
+        ]
+    )
+)
 class RecipeViewSet(viewsets.ModelViewSet):
     """Views for manage recipe API's."""
     queryset = Recipe.objects.all()
@@ -24,9 +46,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def _params_to_ints(self, qs):
+        """Convert list of strings to integers."""
+        return [int(str_id) for str_id in qs.split(",")]
+
     def get_queryset(self):
         """Rterieves recipes for authenticated users."""
-        return self.queryset.filter(user=self.request.user).order_by("-id")
+        tags = self.request.query_params.get("tags")
+        ings = self.request.query_params.get("ingradients")
+        queryset = self.queryset
+
+        if tags:
+            tag_ids = self._params_to_ints(tags)
+            queryset = queryset.filter(tags__id__in=tag_ids)
+
+        if ings:
+            ing_ids = self._params_to_ints(ings)
+            queryset = queryset.filter(ingradients__id__in=ing_ids)
+
+        return queryset.filter(
+            user=self.request.user
+        ).order_by("-id").distinct()
 
     def get_serializer_class(self):
         """Returns the serializer class for request."""
