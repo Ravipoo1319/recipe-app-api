@@ -1,10 +1,11 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from core.models import Ingradient
+from core.models import Ingradient, Recipe
 from rest_framework import status
 from rest_framework.test import APIClient
 from django.urls import reverse
 from recipe.serializers import IngradientSerializer
+from decimal import Decimal
 
 
 INGREADIENT_URLS = reverse("recipe:ingradient-list")
@@ -97,3 +98,45 @@ class PrivateIngredientApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         ingradient_exists = Ingradient.objects.filter(user=self.user).exists()
         self.assertFalse(ingradient_exists)
+
+    def test_filter_ingradients_assigned_to_recipes(self):
+        """Test filtering ingradients assigned to the recipes."""
+        ing1 = Ingradient.objects.create(user=self.user, name="Pepper")
+        ing2 = Ingradient.objects.create(user=self.user, name="Turmeric")
+        recipe = Recipe.objects.create(
+            title="Egg curry",
+            time_minutes=30,
+            price=Decimal("4.25"),
+            user=self.user,
+        )
+        recipe.ingradients.add(ing1)
+
+        res = self.client.get(INGREADIENT_URLS, {"assigned_only": 1})
+
+        s1 = IngradientSerializer(ing1)
+        s2 = IngradientSerializer(ing2)
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
+
+    def test_filter_ingradients_unique(self):
+        """Test filtered ingradients returned a unique list."""
+        ing = Ingradient.objects.create(user=self.user, name="Eggs")
+        Ingradient.objects.create(user=self.user, name="Chilli Powder")
+        recipe1 = Recipe.objects.create(
+            title="Eggs Biryani",
+            time_minutes=30,
+            price=Decimal("3.75"),
+            user=self.user,
+        )
+        recipe2 = Recipe.objects.create(
+            title="Eggs Curry",
+            time_minutes=60,
+            price=Decimal("5.75"),
+            user=self.user,
+        )
+        recipe1.ingradients.add(ing)
+        recipe2.ingradients.add(ing)
+
+        res = self.client.get(INGREADIENT_URLS, {"assigned_only": 1})
+
+        self.assertEqual(len(res.data), 1)

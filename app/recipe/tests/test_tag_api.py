@@ -3,8 +3,9 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
-from core.models import Tag
+from core.models import Tag, Recipe
 from recipe.serializers import TagSerializer
+from decimal import Decimal
 
 TAGS_URL = reverse("recipe:tag-list")
 
@@ -89,3 +90,45 @@ class PrivateTagsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         tag_exists = Tag.objects.filter(user=self.user)
         self.assertFalse(tag_exists)
+
+    def test_filter_tags_assigned_to_recipes(self):
+        """Test filtering tags that are assigned to the recipes."""
+        tag1 = Tag.objects.create(user=self.user, name="South Indian")
+        tag2 = Tag.objects.create(user=self.user, name="North Indian")
+        recipe = Recipe.objects.create(
+            title="Egg Omlete",
+            time_minutes=15,
+            price=Decimal("10.25"),
+            user=self.user
+        )
+        recipe.tags.add(tag1)
+
+        res = self.client.get(TAGS_URL, {"assigned_only": 1})
+
+        s1 = TagSerializer(tag1)
+        s2 = TagSerializer(tag2)
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
+
+    def test_filter_tags_list_unique(self):
+        """Test filtered tag returned a unique list."""
+        tag = Tag.objects.create(user=self.user, name="South Indian")
+        Tag.objects.create(user=self.user, name="North Indian")
+        recipe1 = Recipe.objects.create(
+            title="Egg omelete",
+            time_minutes=20,
+            price=Decimal("8.25"),
+            user=self.user
+        )
+        recipe2 = Recipe.objects.create(
+            title="Butter Chiken",
+            time_minutes=35,
+            price=Decimal("4.99"),
+            user=self.user,
+        )
+        recipe1.tags.add(tag)
+        recipe2.tags.add(tag)
+
+        res = self.client.get(TAGS_URL, {"assigned_only": 1})
+
+        self.assertEqual(len(res.data), 1)
